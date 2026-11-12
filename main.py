@@ -65,18 +65,18 @@ def start(state: State) -> Page:
          bold("Let's start with some information about you. \n"),
          str(state.message),
          "\n What's your goal distance?",
-         SelectBox("goal_distance", ("5.0", "10.0", "21.1")), "km",
+         SelectBox("goal_distance", ["5.0", "10.0", "21.1"]), "km",
          "\n What's your main goal?",
-         SelectBox("main_goal", ("Finish the distance", "Finish in a target time")),
+         SelectBox("main_goal", ["Finish the distance", "Finish in a target time"]),
          "\n If your goal is to finish in a target time, what's your target finish time (in minutes)?\n",
          italic("For example, enter 25.5 for 25 minutes and 30 seconds."),
          TextBox("goal_time", " "),
          "\n What's your longest continuous run so far?",
-         SelectBox("longest_run", ("I'm completely new to running", "About 5km", "More than 10km")),
+         SelectBox("longest_run", ["I'm completely new to running", "About 5km", "More than 10km"]),
          "\n In how many weeks do you want to reach your goal?",
-         SelectBox("number_of_weeks", ("4", "6", "8")),
+         SelectBox("number_of_weeks", ["4", "6", "8"]),
          "\n How many days per week do you want to run?",
-         SelectBox("days_per_week", ("3", "4", "5", "6")),
+         SelectBox("days_per_week", ["3", "4", "5", "6"]),
          "\n",
          Button("Enter", "enter")
          ])
@@ -261,7 +261,7 @@ def workout(state: State, workout_number: int) -> tuple[str, float]:
         warmup = 3
         cooldown = 2
     
-    target_pace = 0
+    target_pace = 0.0
     if state.runner.time > 0:
         target_pace = state.runner.time / state.runner.distance
         easy_pace = format_pace(target_pace * 1.25)
@@ -496,18 +496,18 @@ def generate_program(state: State) -> Page:
             reason = "Time to push! Challenge yourself!" 
         explanations.append(reason)
         
-    buttons = []
+    buttons: list[Component | str] = [] #allows both buttons for sessions and str (blanc space) for rest days
     for session in current_sessions:
         if "Rest" in session.workout_type:
             buttons.append(" ")
         elif not session.is_complete:
             buttons.append(change_background_color(Button(
                 "Done!", "complete",
-                [Argument("week", session.week), Argument("day", session.day)]), "green"))
+                [("week", session.week), ("day", session.day)]), "green"))
         else:
             buttons.append(change_background_color(Button(
                 "Undo", "undo",
-                [Argument("week", session.week), Argument("day", session.day)]), "darkgray"))
+                [("week", session.week), ("day", session.day)]), "darkgray"))
             
     completed_sessions = []
     for session in current_sessions:
@@ -526,7 +526,12 @@ def generate_program(state: State) -> Page:
     content = [
         change_color(Header("Your training schedule"), "black"),
         bold("Week: "), str(state.current_week), " of ", str(state.runner.weeks),
-        Table([change_color(bold(week_days),"black"), sessions, italic(explanations), buttons, completed_sessions]),
+        Table([
+          change_color(bold(week_days),"black"), 
+          sessions, 
+          italic(explanations), 
+          buttons, 
+          completed_sessions])
         ]
     
     if state.current_week > 1:
@@ -590,7 +595,7 @@ def progress(state: State) -> Page:
             total_sessions += 1
     
     completed_sessions = 0
-    distance = 0
+    distance = 0.0
     for session in state.training_sessions:
         if session.is_complete:
             completed_sessions += 1
