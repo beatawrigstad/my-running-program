@@ -503,11 +503,11 @@ def generate_program(state: State) -> Page:
         elif not session.is_complete:
             buttons.append(change_background_color(Button(
                 "Done!", "complete",
-                [("week", session.week), ("day", session.day)]), "green"))
+                [("week", int(session.week)), ("day", str(session.day))]), "green"))
         else:
             buttons.append(change_background_color(Button(
                 "Undo", "undo",
-                [("week", session.week), ("day", session.day)]), "darkgray"))
+                [("week", int(session.week)), ("day", str(session.day))]), "darkgray"))
             
     completed_sessions = []
     for session in current_sessions:
@@ -522,14 +522,21 @@ def generate_program(state: State) -> Page:
     if state.runner.goal == "Finish in a target time":
         pace = " " + "in" + " " + str(state.runner.time) + "min"
 
-    
+    day_headers = []
+    for day in week_days:
+        day_headers.append(change_color(bold(day), "black"))
+
+    explanation_cells = []
+    for reason in explanations:
+        explanation_cells.append(italic(reason)) 
+  
     content = [
         change_color(Header("Your training schedule"), "black"),
         bold("Week: "), str(state.current_week), " of ", str(state.runner.weeks),
         Table([
-          change_color(bold(week_days),"black"), 
+          day_headers, 
           sessions, 
-          italic(explanations), 
+          explanation_cells, 
           buttons, 
           completed_sessions])
         ]
