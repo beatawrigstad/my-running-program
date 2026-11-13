@@ -35,7 +35,7 @@ class TrainingSession:
     
 @dataclass
 class State:
-    """Stores all information needed to run the web application"""
+    """Stores information about the runner, their training sessions, the current week, and a message to the user"""
     runner: Runner
     training_sessions: list[TrainingSession]
     current_week: int
@@ -43,7 +43,14 @@ class State:
 
 @route
 def index(state: State) -> Page:
-    """ Shows the welcome page """
+    """ 
+    Shows the welcome page 
+
+    Arg: 
+      state[State]: the current state
+    Returns:
+      Page: page showing the welcome page
+    """
     
     return Page(
         state,
@@ -57,7 +64,14 @@ def index(state: State) -> Page:
 
 @route
 def start(state: State) -> Page:
-    """ A page with input fields where the user enters their level, goal and time frame. """
+    """ 
+    A page with input fields where the user enter their information
+    
+    Arg: 
+      state[State]: the current state
+    Returns:
+      Page: Page with input fields where the user enters their level, goal and time frame
+    """
     
     return Page(
         state,
@@ -85,7 +99,20 @@ def start(state: State) -> Page:
 def enter(state: State, goal_distance: str, main_goal: str,
           goal_time: str, longest_run: str,
           number_of_weeks: str, days_per_week: str) -> Page:
-    """Takes the user's input and validates them before saving their info to the state"""
+    """
+    Takes the user's input and validates them before saving their info to the state
+    
+    Arg: 
+      state[State]: the current state
+      goal_distance[str]: the user's goal distance entered in the input fields
+      main_goal[str]: the user's main goal entered in the input fields
+      goal_time[str]: the user's goal time (if any) entered in the input fields
+      longest_run[str]: the user's longest continous run so far, entered in the input fields
+      number_of_weeks[str]: in how many weeks the user want to reach their goal, entered in the input fields
+      days_per_week[str]: how many days per week the user wants to run, entered in the input fields
+    Returns:
+      Page: Page where the user confirm their information
+    """
     
     state.runner.distance = float(goal_distance)
     state.runner.goal = main_goal
@@ -163,12 +190,26 @@ def enter(state: State, goal_distance: str, main_goal: str,
 
 @route
 def change(state: State) -> Page:
-    """ Return to the start page where the user can edit their information"""
+    """ 
+    Return to the start page where the user can edit their information
+    
+    Arg:
+      state[State]: the current state
+    Returns:
+      Page: the start Page  
+    """
     state.message = ""
     return start(state)
 
 def format_pace(pace: float) -> str:
-    """Format a pace in decimal minutes to minutes and seconds per km"""
+    """
+    Format a pace in decimal minutes to minutes and seconds per km
+
+    Arg:
+      pace[float]: a pace in decmial minutes 
+    Returns:
+      str: the pace in minutes:seconds (min/km)
+    """
     seconds = round(pace*60)
     pace_min = seconds // 60
     pace_sec = seconds % 60
@@ -177,7 +218,11 @@ def format_pace(pace: float) -> str:
 def easy_run(state: State) -> tuple[str, float]: #tuple[] shows that the function returns two values as a tuple 
     """
     Calculates the length and pace of the user's easy runs
-    Returns a tuple of a description of the session and the total distance
+    
+    Arg:
+      state[State]: the current state
+    Returns:
+      tuple: a tuple of a description of the session (str) and the total distance (float)
     """
     
     if state.runner.time == 0:
@@ -231,7 +276,12 @@ def easy_run(state: State) -> tuple[str, float]: #tuple[] shows that the functio
 def workout(state: State, workout_number: int) -> tuple[str, float]:
     """
     Generates a workout and pace based on the runner's level, goal and schedule
-    Returns a tuple of a description of the session and the total distance
+    
+    Arg:
+      state[State]: the current state
+      workout_number[int]: the number of workout of the week 
+    Returns:
+      tuple: a tuple of a description of the session (str) and the total distance (float)
     """
     
     if state.runner.level == 1:
@@ -374,7 +424,11 @@ def workout(state: State, workout_number: int) -> tuple[str, float]:
 def long_run(state: State) -> tuple[str, float]:
     """
     Calculates the length and pace of the user's long run
-    Returns a tuple of a description of the session and the total distance
+    
+    Arg:
+      state[State]: the current state
+    Returns:
+      tuple: a tuple of a description of the session (str) and the total distance (float)
     """
     
     if state.runner.time == 0:
@@ -424,7 +478,14 @@ def long_run(state: State) -> tuple[str, float]:
 
 @route
 def generate_program(state: State) -> Page:
-    """ Displays the training schedule for the current week"""
+    """ 
+    Displays the training schedule for the current week
+
+    Arg:
+      state[State]: the current state
+    Returns:
+      Page: a page displaying the user's training program for the current week
+    """
     
     week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     if state.current_week == 0:
@@ -560,7 +621,14 @@ def generate_program(state: State) -> Page:
 
 @route
 def complete(state: State, week: int, day: str) -> Page:
-    """Updates the given training session as complete in the state"""
+    """
+    Updates the given training session as complete in the state
+
+    Arg:
+      state[State]: the current state
+    Returns:
+      Page: page displaying the user's training program for the current week
+    """
     
     for session in state.training_sessions:
         if session.week == week and session.day == day:
@@ -569,7 +637,14 @@ def complete(state: State, week: int, day: str) -> Page:
 
 @route
 def undo(state: State, week: int, day: str) -> Page:
-    """Updates the given training session as not complete in the state"""
+    """
+    Updates the given training session as not complete in the state
+    
+    Arg:
+      state[State]: the current state
+    Returns:
+      Page: page displaying the user's training program for the current week
+    """
     
     for session in state.training_sessions:
         if session.week == week and session.day == day:
@@ -578,7 +653,14 @@ def undo(state: State, week: int, day: str) -> Page:
 
 @route
 def previous_week(state: State) -> Page:
-    """ Move back a week, if the current week is not week 1"""
+    """ 
+    Move back a week, if the current week is not week 1
+    
+    Arg:
+      state[State]: the current state
+    Returns:
+      Page: showing the traning program for the previous week
+    """
     
     if state.current_week > 1:
         state.current_week -= 1
@@ -586,7 +668,14 @@ def previous_week(state: State) -> Page:
 
 @route
 def next_week(state: State) -> Page:
-    """ Move to the next week, if it's not the last week of the program"""
+    """ 
+    Move to the next week, if it's not the last week of the program
+    
+    Arg:
+      state[State]: the current state
+    Returns:
+      Page: showing the traning program for the next week
+    """
     
     if state.current_week < state.runner.weeks:
         state.current_week += 1
@@ -594,7 +683,14 @@ def next_week(state: State) -> Page:
 
 @route
 def progress(state: State) -> Page:
-    """ Shows the user's total distance and number of sessions completed, and a motivating message"""
+    """ 
+    Shows the user's total distance (based on completed sessions) and number of sessions completed, and a message
+
+    Arg:
+      state[State]: the current state
+    Returns:
+      Page: page showing the user's total distance and number of completed sessions
+    """
     
     total_sessions = 0
     for session in state.training_sessions:
@@ -638,6 +734,7 @@ def progress(state: State) -> Page:
         Button("Back to schedule", "generate_program")
         ]
     return Page(state, content)
+
 
 #assert_equal tests
 
