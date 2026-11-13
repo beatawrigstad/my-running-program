@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from drafter import *
+from bakery import assert_equal
 
 hide_debug_information()
 set_website_title("My Running Program")
@@ -13,6 +14,8 @@ set_site_information(author = "Beata Wrigstad",
                      server=None) 
 
 set_website_style("tacit")
+
+# DATACLASSES
 
 @dataclass
 class Runner:
@@ -41,6 +44,445 @@ class State:
     current_week: int
     message: str
 
+# CONSTANTS
+
+WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday",
+    "Friday", "Saturday", "Sunday"]
+
+REST_SESSION = ("Rest", 0.0)
+
+# HELPER FUNCTIONS
+
+def validate_goal_time(goal_time: str) -> bool:
+    """
+    Evaluates whether the user's input time is valid 
+    Arg:
+        goal_time[str]: the time entered in the input field for goal time
+    Returns:
+        bool: True if the goal time is a positive number
+    """
+    goal_time = goal_time.strip()
+    if not goal_time:
+        return False
+    if not goal_time.replace(".", "", 1).isdigit():
+        return False
+    return float(goal_time) > 0
+
+def validate_realistic_time(distance: float, time: float) -> bool:
+    """
+    Checks whether the target time is realistic for the selected distance
+    Arg:
+        distance[float]: the distance selected in the selectbox for goal distance
+        time[float]: time enetered in the input field for goal time
+    Returns:
+        bool: True if the time os realistic for the distance.
+    """
+
+    if distance == 5.0 and time < 10:
+        return False
+    elif distance == 10.0 and time < 20:
+        return False
+    elif distance == 21.1 and time < 45:
+        return False
+    return True
+
+def get_runner_level(longest_run: str) -> int:
+    """
+    Returns the runner's level based on their longest continuous run
+    Arg:
+        longest_run[str]: the string selected for the user's longest continous run
+    Returns:
+        int: number represting the users level
+    """
+    if longest_run == "I'm completely new to running":
+        return 1
+    elif longest_run == "About 5km":
+        return 2
+    else:
+        return 3
+
+def validate_training_goal(distance: float, level: int,weeks: int, days: int) -> bool:
+    """
+    Checks whether the training timeframe is sufficient
+    Arg:
+        distance[float]: the user's goal distance
+        level[int]: the user's current fitness level
+        weeks[int]: the number of weeks the user want to reach their goal in
+        days[int]: the number of days per week the user want to run
+    Returns:
+        bool: True if their goal is realistic within their timeframe
+    """
+
+    total_training_days = weeks * days
+    if level == 1:
+        if distance == 10.0 and total_training_days < 16:
+            return False
+        elif distance == 21.1 and total_training_days < 25:
+            return False
+    if level == 2 and distance == 21.1:
+        if total_training_days < 16:
+            return False
+    return True
+
+def get_time_message(runner: Runner) -> str:
+    """
+    Returns a message describing the runner's goal
+    Arg:
+        runner[Runner]: describes the user's current fitness level, goal, and timeframe.
+    Returns:
+        str: message reflecting their inputs
+    """
+    if runner.time > 0:
+        return "Your target time is " + str(runner.time) + " minutes."
+    return "Your goal is to finish the distance."
+
+def format_pace(pace: float) -> str:
+    """
+    Format a pace in decimal minutes to minutes and seconds per km
+
+    Arg:
+      pace[float]: a pace in decmial minutes 
+    Returns:
+      str: the pace in minutes:seconds (min/km)
+    """
+    seconds = round(pace*60)
+    pace_min = seconds // 60
+    pace_sec = seconds % 60
+
+    #.zfill(2) adds 0 until the string contains two characters
+    return str(pace_min) + ":" + str(pace_sec).zfill(2) + " min/km" 
+
+def get_easy_run_distances(state: State) -> tuple[float, float]:
+    """
+    Returns the starting and ending distances for easy runs
+    Arg:
+        state[State]: the current state
+    Returns:
+        tuple: floats representing initial and final distance of easy runs of the program
+    """
+    distance = state.runner.distance
+    level = state.runner.level
+
+    if distance == 5.0:
+        if level == 1:
+            return 1.5, 3.0
+        elif level == 2:
+            return 3.0, 5.0
+        else:
+            return 4.0, 5.0
+    elif distance == 10.0:
+        if level == 1:
+            return 2.5, 5.0
+        elif level == 2:
+            return 4.0, 7.0
+        else:
+            return 5.0, 8.5
+    else:
+        if level == 1:
+            return 4.0, 8.0
+        elif level == 2:
+            return 5.0, 11.0
+        else:
+            return 8.0, 14.0
+
+def easy_run(state: State) -> tuple[str, float]: #tuple[] shows that the function returns two values as a tuple 
+    """
+    Calculates the length and pace of the user's easy runs
+    
+    Arg:
+      state[State]: the current state
+    Returns:
+      tuple: a tuple of a description of the session (str) and the total distance (float)
+    """
+    
+    if state.runner.time == 0:
+        pace = "a comfortable pace"
+    else:
+        target_pace = state.runner.time/state.runner.distance
+        easy_pace = target_pace * 1.2
+        pace = format_pace(easy_pace)
+    
+    start_len, end_len = get_easy_run_distances(state)
+    
+    # Calculate how far the user is through the training program, which is used to gradually increase the running distance.
+    progress_fraction = (state.current_week - 1) / (state.runner.weeks - 1)
+    
+    distance = start_len + (end_len - start_len) * progress_fraction
+    distance = round(distance, 1) #round to one decimal 
+    
+    description = "Easy run: " + "\n" + str(distance) + "km @ " + pace
+    
+    return description, distance
+
+def get_workout_type(state: State, workout_number: int) -> str:
+    """
+    Selects the workout type based on the runner's level
+    Arg:
+        state[State]: the current state
+        workout_number: the number of workour of the week
+    Returns:
+        str: name of the appropriate workout 
+    """
+    if state.runner.level == 1:
+        if workout_number == 1:
+            return "Run/walk"
+        return "Fartlek"
+    elif state.runner.level == 2:
+        if workout_number == 1:
+            return "Fartlek"
+        return "Intervals"
+    return "Intervals"
+
+def get_warmup_cooldown(state: State) -> tuple[int, int]:
+    """
+    Returns the warm-up and cool-down distances
+    Arg:
+        state[State]: the current state
+    Returns:
+        tuple: integers represeting warmup, cooldown
+    """
+    if state.runner.level == 1:
+        return 1, 1
+    elif state.runner.level == 2:
+        if state.runner.distance == 21.1:
+            return 2, 2
+        return 2, 1
+    return 3, 2
+
+def get_interval_distances(state: State,
+                           workout_number: int) -> tuple[int, int]:
+    """
+    Caculates the starting and ending interval distances in meters
+    Arg:
+        state[State]: the current state
+        workout_number: the number of workout of the week
+    Returns:
+        tuple: integers represeting the initial and final distances of the intervals of the program
+    """
+    distance = state.runner.distance
+    level = state.runner.level
+
+    if distance == 5.0:
+        if level == 2:
+            return 500, 700
+        elif workout_number == 1:
+            return 600, 1000
+        else:
+            return 500, 800
+    elif distance == 10.0:
+        if level == 2:
+            return 600, 1000
+        elif workout_number == 1:
+            return 800, 1500
+        else:
+            return 600, 1200
+    else:
+        if level == 2:
+            return 800, 1200
+        elif workout_number == 1:
+            return 1200, 1800
+        else:
+            return 1000, 1600
+
+def workout(state: State, workout_number: int) -> tuple[str, float]:
+    """
+    Generates a workout and pace based on the runner's level, goal and schedule
+    
+    Arg:
+      state[State]: the current state
+      workout_number[int]: the number of workout of the week 
+    Returns:
+      tuple: a tuple of a description of the session (str) and the total distance (float)
+    """
+  
+    workout_type = get_workout_type(state, workout_number) 
+    warmup, cooldown = get_warmup_cooldown(state)
+    
+    target_pace = 0.0
+    if state.runner.time > 0:
+        target_pace = state.runner.time / state.runner.distance
+        easy_pace = format_pace(target_pace * 1.25)
+        cooldown_pace = format_pace(target_pace * 1.3)
+    else:
+        easy_pace = "comfortable effort"
+        cooldown_pace = "very comfortable effort" 
+    
+    progress_fraction = (state.current_week - 1) / (state.runner.weeks - 1)
+    
+    if workout_type == "Run/walk":
+        repetitions = round(4 + 2 * progress_fraction)
+        run_min = round(1 + 3 * progress_fraction)
+        walk_min = round(2 - progress_fraction)
+        if state.runner.time > 0:
+            run_pace = target_pace * 1.2
+        else:
+            run_pace = 7.0 
+        
+        walk_pace = 10.0
+        distance = warmup + (repetitions * run_min) / run_pace + (repetitions * walk_min) / walk_pace + cooldown
+
+        description = (str(repetitions) + " x (" + str(run_min) + " min run + " +
+            str(walk_min) + " min walk)")
+    
+    elif workout_type == "Fartlek":
+        repetitions = round(4 + 2 * progress_fraction)
+        hard_min = round(1 + 2 * progress_fraction)
+        easy_min = 2
+
+        if state.runner.time > 0:
+            target_pace = state.runner.time / state.runner.distance
+            harder_pace_value = target_pace * 0.95
+            easier_pace_value = target_pace * 1.15
+            harder_pace = format_pace(harder_pace_value)
+            easier_pace = format_pace(easier_pace_value)
+        else:
+            harder_pace_value = 7.0
+            easier_pace_value = 7.0
+            harder_pace = "controlled hard effort"
+            easier_pace = "comfortable effort"
+        
+        distance = warmup + repetitions * (hard_min / harder_pace_value + easy_min / easier_pace_value) + cooldown
+
+        description = (str(repetitions) + " x (" + str(hard_min) + " min hard @ " + harder_pace +
+            " + " + str(easy_min) + " min easy @ " + easier_pace + ")")
+        
+    else:
+        repetitions = round(4 + 2 * progress_fraction)
+
+        start_len, end_len = get_interval_distances(state, workout_number)
+
+        interval_length = round((start_len + (end_len - start_len) * progress_fraction) / 100) * 100
+        rest = round(2 - 0.5 * progress_fraction, 1)
+        distance = warmup + repetitions * interval_length / 1000 + cooldown
+
+        if state.runner.time > 0:
+            target_pace = state.runner.time / state.runner.distance
+            if state.runner.level == 3 and workout_number == 2:
+                pace_factor = 1.00 - (0.08 * progress_fraction)
+                interval_pace = format_pace(target_pace * pace_factor)
+            else:
+                pace_factor = 1.00 - (0.05 * progress_fraction)
+                interval_pace = format_pace(target_pace * pace_factor)
+        else:
+            interval_pace = "controlled hard effort"
+
+        description = (str(repetitions) + " x " + str(interval_length) + "m @ " + interval_pace +
+            ", " + str(rest) + " min rest")
+        
+    whole_workout = "Workout: " + "\n" + (str(warmup) + "km warm-up @ " + easy_pace +
+                     "\n" + description + "\n" +
+                     str(cooldown) + "km cool-down @ " + cooldown_pace)
+        
+    return whole_workout, distance
+    
+def get_long_run_distances(state: State) -> tuple[float, float]:
+    """
+    Calculates the starting and ending distances for long runs
+    Arg:
+        state[State]: the current state
+    Returns:
+        tuple: floats representing the initial and final distances of long runs of the program
+    """
+    distance = state.runner.distance
+    level = state.runner.level
+
+    if distance == 5.0:
+        if level == 1:
+            return 2.0, 4.5
+        elif level == 2:
+            return 4.0, 6.0
+        else:
+            return 6.0, 9.0
+    elif distance == 10.0:
+        if level == 1:
+            return 3.0, 6.0
+        elif level == 2:
+            return 5.0, 9.0
+        else:
+            return 8.0, 12.0
+    else:
+        if level == 1:
+            return 5.0, 10.0
+        elif level == 2:
+            return 8.0, 14.0
+        else:
+            return 12.0, 18.0
+          
+def long_run(state: State) -> tuple[str, float]:
+    """
+    Calculates the length and pace of the user's long run
+    
+    Arg:
+      state[State]: the current state
+    Returns:
+      tuple: a tuple of a description of the session (str) and the total distance (float)
+    """
+    
+    if state.runner.time == 0:
+        pace = "a comfortable pace"
+    else:
+        target_pace = state.runner.time/state.runner.distance
+        easy_pace = target_pace * 1.25
+        pace = format_pace(easy_pace)
+    
+    start_len, end_len = get_long_run_distances(state)
+        
+    progress_fraction = (state.current_week - 1) / (state.runner.weeks - 1)
+    distance = start_len + (end_len - start_len) * progress_fraction
+    distance = round(distance, 1)
+    
+    description = "Long run: " + "\n" + str(distance) + "km @ " + pace
+    return description, distance
+
+def get_weekly_schedule(state: State) -> list:
+    """
+    Creates a weekly schedule based on the number of running days
+    Arg:
+        state[State]: the current state
+    Returns:
+        list: the user's weekly training schedule
+    """
+    if state.runner.days == 3:
+        return [
+            easy_run(state),
+            REST_SESSION,
+            workout(state, 1),
+            REST_SESSION,
+            REST_SESSION,
+            long_run(state),
+            REST_SESSION
+        ]
+    elif state.runner.days == 4:
+        return [
+            easy_run(state),
+            workout(state, 1),
+            REST_SESSION,
+            easy_run(state),
+            REST_SESSION,
+            long_run(state),
+            REST_SESSION
+        ]
+    elif state.runner.days == 5:
+        return [
+            easy_run(state),
+            workout(state, 1),
+            REST_SESSION,
+            easy_run(state),
+            workout(state, 2),
+            long_run(state),
+            REST_SESSION
+        ]
+    else:
+        return [
+            easy_run(state),
+            workout(state, 1),
+            easy_run(state),
+            easy_run(state),
+            workout(state, 2),
+            long_run(state),
+            REST_SESSION
+        ]
+      
 @route
 def index(state: State) -> Page:
     """ 
@@ -113,76 +555,43 @@ def enter(state: State, goal_distance: str, main_goal: str,
     Returns:
       Page: Page where the user confirm their information
     """
-    
-    state.runner.distance = float(goal_distance)
-    state.runner.goal = main_goal
-    
+    distance = float(goal_distance)
+    level = get_runner_level(longest_run)
+    weeks = int(number_of_weeks)
+    days = int(days_per_week)
+
     if main_goal == "Finish the distance":
-        state.runner.time = 0.0
+        time = 0.0
     else:
-        goal_time = goal_time.strip()
-        if not goal_time:
-            state.message = "Please enter your target time"
+        if not validate_goal_time(goal_time):
+            state.message = "Please enter a valid target time greater than zero, for example 25.5"
             return start(state)
-        elif not goal_time.replace(".", "", 1).isdigit(): # .replace(".", "", 1) removes ONE dot! 
-            state.message = "Please enter your target time in minutes, for example 25.5"
-            return start(state)
-        elif float(goal_time) <= 0:
-            state.message = "Please enter a target time greater than zero"
-            return start(state)
-        else:
-            state.runner.time = float(goal_time)
-            
-    if not main_goal == "Finish the distance":
-        if state.runner.distance == 5.0 and float(goal_time) < 10:
+        time = float(goal_time)
+        if not validate_realistic_time(distance, time):
             state.message = "Please enter a realistic target time."
             return start(state)
-        elif state.runner.distance == 10.0 and float(goal_time) < 20:
-            state.message = "Please enter a realistic target time."
-            return start(state)
-        elif state.runner.distance == 21.1 and float(goal_time) < 45:
-            state.message = "Please enter a realistic target time."
-            return start(state)
-        
-    if longest_run == "I'm completely new to running":
-        state.runner.level = 1
-    elif longest_run == "About 5km":
-        state.runner.level = 2
-    else:
-        state.runner.level = 3
-        
-    state.runner.weeks = int(number_of_weeks)
-    state.runner.days = int(days_per_week)
-    
-    if state.runner.level == 1:
-        if state.runner.distance == 10.0:
-            if state.runner.weeks * state.runner.days < 16:
-                state.message = "Please enter a more realistic goal."
-                return start(state)
-        elif state.runner.distance == 21.1:
-            if state.runner.weeks * state.runner.days < 25:
-                state.message = "Please enter a more realistic goal."
-                return start(state)
-            
-    if state.runner.level == 2 and state.runner.distance == 21.1:
-            if state.runner.weeks * state.runner.days < 16:
-                state.message = "Please enter a more realistic goal."
-                return start(state)
-            
+    if not validate_training_goal(distance, level, weeks, days):
+        state.message = "Please enter a more realistic goal."
+        return start(state)
+
+    state.runner.distance = distance
+    state.runner.goal = main_goal
+    state.runner.time = time
+    state.runner.level = level
+    state.runner.weeks = weeks
+    state.runner.days = days
+
     state.current_week = 1
     state.training_sessions = []
     state.message = ""
-    
-    if state.runner.time > 0:
-        time_message = "Your target time is " + str(state.runner.time) + " minutes."
-    else:
-         time_message = "Your goal is to finish the distance."
 
     return Page(
         state,
         [change_color(Header("Great!"), "black"),
-         "You selected a " + str(state.runner.weeks) + "-week program for " + str(state.runner.distance) + " km.",
-         time_message, "\n",
+         "You selected a " + str(state.runner.weeks) +
+         "-week program for " + str(state.runner.distance) + " km.",
+         get_time_message(state.runner),
+         "\n",
          "\n",
          Button("Yes! Let's go!", "generate_program"),
          Button("No, I want to change the information", "change")
@@ -201,280 +610,6 @@ def change(state: State) -> Page:
     state.message = ""
     return start(state)
 
-def format_pace(pace: float) -> str:
-    """
-    Format a pace in decimal minutes to minutes and seconds per km
-
-    Arg:
-      pace[float]: a pace in decmial minutes 
-    Returns:
-      str: the pace in minutes:seconds (min/km)
-    """
-    seconds = round(pace*60)
-    pace_min = seconds // 60
-    pace_sec = seconds % 60
-    return str(pace_min) + ":" + str(pace_sec).zfill(2) + " min/km" #.zfill(2) adds 0 until the string contains two characters
-
-def easy_run(state: State) -> tuple[str, float]: #tuple[] shows that the function returns two values as a tuple 
-    """
-    Calculates the length and pace of the user's easy runs
-    
-    Arg:
-      state[State]: the current state
-    Returns:
-      tuple: a tuple of a description of the session (str) and the total distance (float)
-    """
-    
-    if state.runner.time == 0:
-        pace = "a comfortable pace"
-    else:
-        target_pace = state.runner.time/state.runner.distance
-        easy_pace = target_pace * 1.2
-        pace = format_pace(easy_pace)
-    
-    if state.runner.distance == 5.0:
-        if state.runner.level == 1:
-            start_len = 1.5
-            end_len = 3.0
-        elif state.runner.level == 2:
-            start_len = 3.0
-            end_len = 5.0
-        else:
-            start_len = 4.0
-            end_len = 5.0
-    elif state.runner.distance == 10.0:
-        if state.runner.level == 1:
-            start_len = 2.5
-            end_len = 5.0
-        elif state.runner.level == 2:
-            start_len = 4.0
-            end_len = 7.0
-        else:
-            start_len = 5.0
-            end_len = 8.5
-    elif state.runner.distance == 21.1:
-        if state.runner.level == 1:
-            start_len = 4.0
-            end_len = 8.0
-        elif state.runner.level == 2:
-            start_len = 5.0
-            end_len = 11.0
-        else:
-            start_len = 8.0
-            end_len = 14.0
-    
-    # Calculate how far the user is through the training program, which is used to gradually increase the running distance.
-    progress_fraction = (state.current_week - 1) / (state.runner.weeks - 1)
-    distance = start_len + (end_len - start_len) * progress_fraction
-    distance = round(distance, 1) #round to one decimal 
-    
-    description = "Easy run: " + "\n" + str(distance) + "km @ " + pace
-    
-    return description, distance
-
-
-def workout(state: State, workout_number: int) -> tuple[str, float]:
-    """
-    Generates a workout and pace based on the runner's level, goal and schedule
-    
-    Arg:
-      state[State]: the current state
-      workout_number[int]: the number of workout of the week 
-    Returns:
-      tuple: a tuple of a description of the session (str) and the total distance (float)
-    """
-    
-    if state.runner.level == 1:
-        if workout_number == 1:
-            workout_type = "Run/walk"
-        else:
-            workout_type = "Fartlek"
-    elif state.runner.level == 2:
-        if workout_number == 1:
-            workout_type = "Fartlek"
-        else:
-            workout_type = "Intervals"
-    else:
-        workout_type = "Intervals"
-        
-    if state.runner.level == 1:
-        warmup = 1
-        cooldown = 1
-    elif state.runner.level == 2:
-        if state.runner.distance == 21.1:
-            warmup = 2
-            cooldown = 2
-        else:
-            warmup = 2
-            cooldown = 1
-    else:
-        warmup = 3
-        cooldown = 2
-    
-    target_pace = 0.0
-    if state.runner.time > 0:
-        target_pace = state.runner.time / state.runner.distance
-        easy_pace = format_pace(target_pace * 1.25)
-        cooldown_pace = format_pace(target_pace * 1.3)
-    else:
-        easy_pace = "comfortable effort"
-        cooldown_pace = "very comfortable effort" 
-    
-    progress_fraction = (state.current_week - 1) / (state.runner.weeks - 1)
-    
-    if workout_type == "Run/walk":
-        repetitions = round(4 + 2 * progress_fraction)
-        run_min = round(1 + 3 * progress_fraction)
-        walk_min = round(2 - progress_fraction)
-        
-        if state.runner.time > 0:
-            run_pace = target_pace * 1.2
-        else:
-            run_pace = 7.0
-        
-        walk_pace = 10.0
-        distance = warmup + (repetitions * run_min) / run_pace + (repetitions * walk_min) / walk_pace + cooldown
-
-        description = (str(repetitions) + " x (" + str(run_min) + " min run + " +
-            str(walk_min) + " min walk)")
-    
-    elif workout_type == "Fartlek":
-        repetitions = round(4 + 2 * progress_fraction)
-        hard_min = round(1 + 2 * progress_fraction)
-        easy_min = 2
-
-        if state.runner.time > 0:
-            target_pace = state.runner.time / state.runner.distance
-            harder_pace_value = target_pace * 0.95
-            easier_pace_value = target_pace * 1.15
-            harder_pace = format_pace(harder_pace_value)
-            easier_pace = format_pace(easier_pace_value)
-        else:
-            harder_pace_value = 7.0
-            easier_pace_value = 7.0
-            harder_pace = "controlled hard effort"
-            easier_pace = "comfortable effort"
-        
-        distance = warmup + repetitions * (hard_min / harder_pace_value + easy_min / easier_pace_value) + cooldown
-
-        description = (str(repetitions) + " x (" + str(hard_min) + " min hard @ " + harder_pace +
-            " + " + str(easy_min) + " min easy @ " + easier_pace + ")")
-        
-    else:
-        repetitions = round(4 + 2 * progress_fraction)
-
-        if state.runner.distance == 5.0:
-            if state.runner.level == 2:
-                start_len = 500
-                end_len = 700
-            elif workout_number == 1:
-                start_len = 600
-                end_len = 1000
-            else:
-                start_len = 500
-                end_len = 800
-
-        elif state.runner.distance == 10.0:
-            if state.runner.level == 2:
-                start_len = 600
-                end_len = 1000
-            elif workout_number == 1:
-                start_len = 800
-                end_len = 1500
-            else:
-                start_len = 600
-                end_len = 1200
-
-        else:
-            if state.runner.level == 2:
-                start_len = 800
-                end_len = 1200
-            elif workout_number == 1:
-                start_len = 1200
-                end_len = 1800
-            else:
-                start_len = 1000
-                end_len = 1600
-
-        interval_length = round((start_len + (end_len - start_len) * progress_fraction) / 100) * 100
-        rest = round(2 - 0.5 * progress_fraction, 1)
-        distance = warmup + repetitions * interval_length / 1000 + cooldown
-
-        if state.runner.time > 0:
-            target_pace = state.runner.time / state.runner.distance
-            if state.runner.level == 3 and workout_number == 2:
-                pace_factor = 1.00 - (0.08 * progress_fraction)
-                interval_pace = format_pace(target_pace * pace_factor)
-            else:
-                pace_factor = 1.00 - (0.05 * progress_fraction)
-                interval_pace = format_pace(target_pace * pace_factor)
-        else:
-            interval_pace = "controlled hard effort"
-
-        description = (str(repetitions) + " x " + str(interval_length) + "m @ " + interval_pace +
-            ", " + str(rest) + " min rest")
-        
-    whole_workout = "Workout: " + "\n" + (str(warmup) + "km warm-up @ " + easy_pace +
-                     "\n" + description + "\n" +
-                     str(cooldown) + "km cool-down @ " + cooldown_pace)
-        
-    return whole_workout, distance
-    
-
-def long_run(state: State) -> tuple[str, float]:
-    """
-    Calculates the length and pace of the user's long run
-    
-    Arg:
-      state[State]: the current state
-    Returns:
-      tuple: a tuple of a description of the session (str) and the total distance (float)
-    """
-    
-    if state.runner.time == 0:
-        pace = "a comfortable pace"
-    else:
-        target_pace = state.runner.time/state.runner.distance
-        easy_pace = target_pace * 1.25
-        pace = format_pace(easy_pace)
-    
-    if state.runner.distance == 5.0:
-        if state.runner.level == 1:
-            start_len = 2.0
-            end_len = 4.5
-        elif state.runner.level == 2:
-            start_len = 4.0
-            end_len = 6.0
-        else:
-            start_len = 6.0
-            end_len = 9.0
-    elif state.runner.distance == 10.0:
-        if state.runner.level == 1:
-            start_len = 3.0
-            end_len = 6.0
-        elif state.runner.level == 2:
-            start_len = 5.0
-            end_len = 9.0
-        else:
-            start_len = 8.0
-            end_len = 12.0
-    elif state.runner.distance == 21.1:
-        if state.runner.level == 1:
-            start_len = 5.0
-            end_len = 10.0
-        elif state.runner.level == 2:
-            start_len = 8.0
-            end_len = 14.0
-        else:
-            start_len = 12.0
-            end_len = 18.0
-        
-    progress_fraction = (state.current_week - 1) / (state.runner.weeks - 1)
-    distance = start_len + (end_len - start_len) * progress_fraction
-    distance = round(distance, 1)
-    
-    description = "Long run: " + "\n" + str(distance) + "km @ " + pace
-    return description, distance
 
 @route
 def generate_program(state: State) -> Page:
@@ -486,8 +621,6 @@ def generate_program(state: State) -> Page:
     Returns:
       Page: a page displaying the user's training program for the current week
     """
-    
-    week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     if state.current_week == 0:
         state.current_week = 1
     
@@ -495,43 +628,12 @@ def generate_program(state: State) -> Page:
     if not state.training_sessions:
         for week in range(1, state.runner.weeks + 1):
             state.current_week = week
-            
-            if state.runner.days == 3:
-                schedule = [easy_run(state),
-                            ("Rest", 0.0),
-                            workout(state, 1),
-                            ("Rest", 0.0),
-                            ("Rest", 0.0),
-                            long_run(state),
-                            ("Rest", 0.0)]
-            elif state.runner.days == 4:
-                schedule = [easy_run(state),
-                            workout(state, 1),
-                            ("Rest", 0.0),
-                            easy_run(state),
-                            ("Rest", 0.0),
-                            long_run(state),
-                            ("Rest", 0.0)]
-            elif state.runner.days == 5:
-                schedule = [easy_run(state),
-                            workout(state, 1),
-                            ("Rest", 0.0),
-                            easy_run(state),
-                            workout(state, 2),
-                            long_run(state),
-                            ("Rest", 0.0)]
-            elif state.runner.days == 6:
-                schedule = [easy_run(state),
-                            workout(state, 1),
-                            easy_run(state),
-                            easy_run(state),
-                            workout(state, 2),
-                            long_run(state),
-                            ("Rest", 0.0)]
+
+            schedule = get_weekly_schedule(state)
             
             for i in range(len(schedule)):
                 workout_type, distance = schedule[i]
-                session = TrainingSession(week, week_days[i], workout_type, distance, False)
+                session = TrainingSession(week, WEEK_DAYS[i], workout_type, distance, False)
                 state.training_sessions.append(session)
                 
         state.current_week = 1
@@ -584,7 +686,7 @@ def generate_program(state: State) -> Page:
         pace = " " + "in" + " " + str(state.runner.time) + "min"
 
     day_headers = []
-    for day in week_days:
+    for day in WEEK_DAYS:
         day_headers.append(change_color(bold(day), "black"))
 
     explanation_cells = []
@@ -737,6 +839,140 @@ def progress(state: State) -> Page:
 
 
 #assert_equal tests
+
+# validate_goal_time
+assert_equal(validate_goal_time("25.5"), True)
+assert_equal(validate_goal_time("abc"), False)
+assert_equal(validate_goal_time(" "), False)
+
+
+# validate_realistic_time
+assert_equal(validate_realistic_time(5.0, 9.9), False)
+assert_equal(validate_realistic_time(5.0, 10.0), True)
+assert_equal(validate_realistic_time(21.1, 44.0), False)
+
+
+# get_runner_level
+assert_equal(get_runner_level("I'm completely new to running"), 1)
+assert_equal(get_runner_level("About 5km"), 2)
+assert_equal(get_runner_level("More than 10km"), 3)
+
+
+# validate_training_goal
+assert_equal(validate_training_goal(5.0, 1, 4, 3), True)
+assert_equal(validate_training_goal(10.0, 1, 4, 3), False)
+assert_equal(validate_training_goal(21.1, 2, 4, 4), True)
+
+
+# get_time_message
+assert_equal(
+    get_time_message(Runner(5.0, "Finish the distance", 0.0, 1, 4, 3)),
+    "Your goal is to finish the distance."
+)
+assert_equal(
+    get_time_message(Runner(5.0, "Finish in a target time", 25.5, 1, 4, 3)),
+    "Your target time is 25.5 minutes."
+)
+assert_equal(
+    get_time_message(Runner(10.0, "Finish in a target time", 50.0, 2, 6, 4)),
+    "Your target time is 50.0 minutes."
+)
+
+
+# get_easy_run_distances
+assert_equal(
+    get_easy_run_distances(State(Runner(5.0, "", 0.0, 1, 4, 3), [], 1, "")),
+    (1.5, 3.0)
+)
+assert_equal(
+    get_easy_run_distances(State(Runner(10.0, "", 0.0, 2, 6, 4), [], 1, "")),
+    (4.0, 7.0)
+)
+assert_equal(
+    get_easy_run_distances(State(Runner(21.1, "", 0.0, 3, 8, 5), [], 1, "")),
+    (8.0, 14.0)
+)
+
+
+# get_workout_type
+assert_equal(
+    get_workout_type(State(Runner(5.0, "", 0.0, 1, 4, 3), [], 1, ""), 1),
+    "Run/walk"
+)
+assert_equal(
+    get_workout_type(State(Runner(10.0, "", 0.0, 2, 6, 4), [], 1, ""), 2),
+    "Intervals"
+)
+assert_equal(
+    get_workout_type(State(Runner(21.1, "", 0.0, 3, 8, 5), [], 1, ""), 1),
+    "Intervals"
+)
+
+
+# get_warmup_cooldown
+assert_equal(
+    get_warmup_cooldown(State(Runner(5.0, "", 0.0, 1, 4, 3), [], 1, "")),
+    (1, 1)
+)
+assert_equal(
+    get_warmup_cooldown(State(Runner(10.0, "", 0.0, 2, 6, 4), [], 1, "")),
+    (2, 1)
+)
+assert_equal(
+    get_warmup_cooldown(State(Runner(21.1, "", 0.0, 2, 8, 5), [], 1, "")),
+    (2, 2)
+)
+
+
+# get_interval_distances
+assert_equal(
+    get_interval_distances(State(Runner(5.0, "", 0.0, 2, 4, 3), [], 1, ""), 1),
+    (500, 700)
+)
+assert_equal(
+    get_interval_distances(State(Runner(10.0, "", 0.0, 1, 6, 4), [], 1, ""), 1),
+    (800, 1500)
+)
+assert_equal(
+    get_interval_distances(State(Runner(21.1, "", 0.0, 3, 8, 5), [], 1, ""), 2),
+    (1000, 1600)
+)
+
+
+# get_long_run_distances
+assert_equal(
+    get_long_run_distances(State(Runner(5.0, "", 0.0, 1, 4, 3), [], 1, "")),
+    (2.0, 4.5)
+)
+assert_equal(
+    get_long_run_distances(State(Runner(10.0, "", 0.0, 2, 6, 4), [], 1, "")),
+    (5.0, 9.0)
+)
+assert_equal(
+    get_long_run_distances(State(Runner(21.1, "", 0.0, 3, 8, 5), [], 1, "")),
+    (12.0, 18.0)
+)
+
+
+# get_weekly_schedule
+assert_equal(
+    len(get_weekly_schedule(
+        State(Runner(5.0, "", 0.0, 1, 4, 3), [], 1, "")
+    )),
+    7
+)
+assert_equal(
+    get_weekly_schedule(
+        State(Runner(10.0, "", 0.0, 2, 6, 4), [], 1, "")
+    )[2],
+    REST_SESSION
+)
+assert_equal(
+    get_weekly_schedule(
+        State(Runner(21.1, "", 0.0, 3, 8, 6), [], 1, "")
+    )[6],
+    REST_SESSION
+)
 
 #format_face
 assert_equal(format_pace(5.5), "5:30 min/km")
