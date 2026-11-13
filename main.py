@@ -139,8 +139,8 @@ def enter(state: State, goal_distance: str, main_goal: str,
             
     if state.runner.level == 2 and state.runner.distance == 21.1:
         if state.runner.weeks * state.runner.days < 16:
-          state.message = "Please enter a more realistic goal."
-              return start(state)
+            state.message = "Please enter a more realistic goal."
+                return start(state)
             
     state.current_week = 1
     state.training_sessions = []
