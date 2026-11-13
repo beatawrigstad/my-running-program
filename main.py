@@ -8,7 +8,7 @@ set_site_information(author = "Beata Wrigstad",
                      description = "Generates a personalized running program based on the user's current fitness level, goal, and available time",
                      sources = ["A LLM was mainly used to brainstorm and help me improve my initial idea, as well as to review my program for potential errors and misses.", 
                                 "LLM-documentation.docx"],
-                     planning = ["CS1-final-project-0-BW.docx", "CS1-final-project-1-BW.docx"],
+                     planning = ["CS1-final-project-0-BW.docx", "CS1-final-project-1-BW.docx", "CS1-template-BW.pdf"],
                      links = ["https://github.com/beatawrigstad/my-running-program"],
                      server=None) 
 
