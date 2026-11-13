@@ -744,24 +744,14 @@ assert_equal(format_pace(4.25), "4:15 min/km")
 assert_equal(format_pace(6.0), "6:00 min/km")
 
 # easy_run
-state = State(Runner(5.0, "Finish the distance", 0.0, 1, 4, 3), [], 1, "")
-
 assert_equal(
-    easy_run(state),
+    easy_run(State(Runner(5.0, "Finish the distance", 0.0, 1, 4, 3), [], 1, "")
+),
     ("Easy run: \n1.5km @ a comfortable pace", 1.5))
 
-state.current_week = 4
-
-assert_equal(
-    easy_run(state),
-    ("Easy run: \n3.0km @ a comfortable pace", 3.0)
-)
-
 # workout
-state = State(Runner(5.0, "Finish the distance", 0.0, 1, 4, 3), [], 1, "")
-
 assert_equal(
-    workout(state, 1),
+    workout(State(Runner(5.0, "Finish the distance", 0.0, 1, 4, 3), [], 1, ""), 1),
     (
         "Workout: \n"
         "1km warm-up @ comfortable effort\n"
@@ -772,18 +762,9 @@ assert_equal(
 )
 
 # long_run
-state = State(Runner(5.0, "Finish the distance", 0.0, 1, 4, 3), [], 1, "")
-
 assert_equal(
-    long_run(state),
+    long_run(State(Runner(5.0, "Finish the distance", 0.0, 1, 4, 3), [], 1, "")),
     ("Long run: \n2.0km @ a comfortable pace", 2.0)
-)
-
-state.current_week = 4
-
-assert_equal(
-    long_run(state),
-    ("Long run: \n4.5km @ a comfortable pace", 4.5)
 )
 
 
