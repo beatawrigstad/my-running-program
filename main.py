@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from drafter import *
-from bakery import assert_equal 
 
 hide_debug_information()
 set_website_title("My Running Program")
@@ -497,7 +496,7 @@ def generate_program(state: State) -> Page:
             reason = "Time to push! Challenge yourself!" 
         explanations.append(reason)
         
-    buttons: list[Component | str] = [] #allows both buttons for sessions and str (blanc space) for rest days
+    buttons = [] 
     for session in current_sessions:
         if "Rest" in session.workout_type:
             buttons.append(" ")
