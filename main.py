@@ -5,8 +5,7 @@ hide_debug_information()
 set_website_title("My Running Program")
 set_website_framed(False)
 set_site_information(author = "Beata Wrigstad",
-                     description = "Generates a personalized running program based on 
-                     the user's current fitness level, goal, and available time",
+                     description = "Generates a personalized running program based on the user's current fitness level, goal, and available time",
                      sources = ["A LLM was mainly used to brainstorm and help me improve my initial idea, 
                      as well as to review my program for potential errors and misses.", 
                                 "LLM-documentation.docx"],
@@ -70,8 +69,7 @@ def start(state: State) -> Page:
          SelectBox("goal_distance", ["5.0", "10.0", "21.1"]), "km",
          "\n What's your main goal?",
          SelectBox("main_goal", ["Finish the distance", "Finish in a target time"]),
-         "\n If your goal is to finish in a target time, 
-         what's your target finish time (in minutes)?\n",
+         "\n If your goal is to finish in a target time, what's your target finish time (in minutes)?\n",
          italic("For example, enter 25.5 for 25 minutes and 30 seconds."),
          TextBox("goal_time", " "),
          "\n What's your longest continuous run so far?",
@@ -558,8 +556,7 @@ def generate_program(state: State) -> Page:
     else:
         content.append("\n")
         content.append("Good job! You've reached the final week of your program! 
-        After this week, you are ready to run a" +
-                       " " + str(state.runner.distance) + "km" + pace)
+        After this week, you are ready to run a" + " " + str(state.runner.distance) + "km" + pace)
     content.append("\n")
     content.append("\n")
     content.append(Button("Change my information", "change"))
@@ -627,7 +624,7 @@ def progress(state: State) -> Page:
         state.message = "Awesome job! Almost there!"
     elif state.current_week == state.runner.weeks // 2:
         state.message = "Halfway there, let's keep going!"
-    elif len(state.training_sessions)>0 and (completed_sessions/len(state.training_sessions))>0.5:
+    elif len(state.training_sessions) > 0 and (completed_sessions/len(state.training_sessions)) > 0.5:
         state.message = "You're making progress! Let's keep going"
     else:
         state.message = "You're doing awesome! Let's keep it up!" 
