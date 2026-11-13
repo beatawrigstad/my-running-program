@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from drafter import *
+from bakery import assert_equal 
 
 hide_debug_information()
 set_website_title("My Running Program")
@@ -638,6 +639,1022 @@ def progress(state: State) -> Page:
         Button("Back to schedule", "generate_program")
         ]
     return Page(state, content)
-    
+
+#assert_equal tests
+
+#format_face
+assert_equal(format_pace(5.5), "5:30 min/km")
+assert_equal(format_pace(4.25), "4:15 min/km")
+assert_equal(format_pace(6.0), "6:00 min/km")
+
+# easy_run
+state = State(Runner(5.0, "Finish the distance", 0.0, 1, 4, 3), [], 1, "")
+
+assert_equal(
+    easy_run(state),
+    ("Easy run: \n1.5km @ a comfortable pace", 1.5))
+
+state.current_week = 4
+
+assert_equal(
+    easy_run(state),
+    ("Easy run: \n3.0km @ a comfortable pace", 3.0)
+)
+
+# workout
+state = State(Runner(5.0, "Finish the distance", 0.0, 1, 4, 3), [], 1, "")
+
+assert_equal(
+    workout(state, 1),
+    (
+        "Workout: \n"
+        "1km warm-up @ comfortable effort\n"
+        "4 x (1 min run + 2 min walk)\n"
+        "1km cool-down @ very comfortable effort",
+        3.3714285714285714
+    )
+)
+
+# long_run
+state = State(Runner(5.0, "Finish the distance", 0.0, 1, 4, 3), [], 1, "")
+
+assert_equal(
+    long_run(state),
+    ("Long run: \n2.0km @ a comfortable pace", 2.0)
+)
+
+state.current_week = 4
+
+assert_equal(
+    long_run(state),
+    ("Long run: \n4.5km @ a comfortable pace", 4.5)
+)
+
+
+#index 
+assert_equal(index(State(
+    runner=Runner(distance=0.0, goal='', time=0.0, level=0, weeks=0, days=0),
+    training_sessions=[],
+    current_week=1,
+    message=''
+)), Page(State(
+    runner=Runner(distance=0.0, goal='', time=0.0, level=0, weeks=0, days=0),
+    training_sessions=[],
+    current_week=1,
+    message=''
+), [
+    change_color(Header("My Running Program"), "black"),
+    bold("Welcome! \n"),
+    "Want to take your running to the next level?",
+    "\n Get a personalized running program based on your current fitness and goals! \n",
+    "\n",
+    Button("Let's get started", "start")
+]))
+
+
+#start
+assert_equal(
+    start(State(
+        runner=Runner(
+            distance=0.0,
+            goal='',
+            time=0.0,
+            level=0,
+            weeks=0,
+            days=0
+        ),
+        training_sessions=[],
+        current_week=1,
+        message=''
+    )),
+    Page(
+        State(
+            runner=Runner(
+                distance=0.0,
+                goal='',
+                time=0.0,
+                level=0,
+                weeks=0,
+                days=0
+            ),
+            training_sessions=[],
+            current_week=1,
+            message=''
+        ),
+        [
+            Header("Let's get started!", style_color='black'),
+            bold("Let's start with some information about you. \n"),
+            '',
+            "\n What's your goal distance?",
+            SelectBox('goal_distance', ['5.0', '10.0', '21.1'], ''),
+            'km',
+            "\n What's your main goal?",
+            SelectBox('main_goal', ['Finish the distance', 'Finish in a target time'], ''),
+            "\n If your goal is to finish in a target time, what's your target finish time (in minutes)?\n",
+            italic('For example, enter 25.5 for 25 minutes and 30 seconds.'),
+            TextBox('goal_time', ' '),
+            "\n What's your longest continuous run so far?",
+            SelectBox('longest_run', ["I'm completely new to running", 'About 5km', 'More than 10km'], ''),
+            '\n In how many weeks do you want to reach your goal?',
+            SelectBox('number_of_weeks', ['4', '6', '8'], ''),
+            '\n How many days per week do you want to run?',
+            SelectBox('days_per_week', ['3', '4', '5', '6'], ''),
+            '\n',
+            Button('Enter', 'enter')
+        ]
+    )
+)
+
+#enter
+assert_equal(
+    enter(
+        State(
+            runner=Runner(
+                distance=0.0,
+                goal='',
+                time=0.0,
+                level=0,
+                weeks=0,
+                days=0
+            ),
+            training_sessions=[],
+            current_week=1,
+            message=''
+        ),
+        '5.0',
+        'Finish the distance',
+        ' ',
+        "I'm completely new to running",
+        '4',
+        '3'
+    ),
+    Page(
+        State(
+            runner=Runner(
+                distance=5.0,
+                goal='Finish the distance',
+                time=0.0,
+                level=1,
+                weeks=4,
+                days=3
+            ),
+            training_sessions=[],
+            current_week=1,
+            message=''
+        ),
+        [
+            Header('Great!', style_color='black'),
+            'You selected a 4-week program for 5.0 km.',
+            'Your goal is to finish the distance.',
+            '\n',
+            '\n',
+            Button("Yes! Let's go!", 'generate_program'),
+            Button('No, I want to change the information', 'change')
+        ]
+    )
+)
+
+#change
+assert_equal(
+    change(
+        State(
+            runner=Runner(
+                distance=5.0,
+                goal='Finish the distance',
+                time=0.0,
+                level=1,
+                weeks=4,
+                days=3
+            ),
+            training_sessions=[],
+            current_week=1,
+            message=''
+        )
+    ),
+    Page(
+        State(
+            runner=Runner(
+                distance=5.0,
+                goal='Finish the distance',
+                time=0.0,
+                level=1,
+                weeks=4,
+                days=3
+            ),
+            training_sessions=[],
+            current_week=1,
+            message=''
+        ),
+        [
+            Header("Let's get started!", style_color='black'),
+            bold("Let's start with some information about you. \n"),
+            '',
+            "\n What's your goal distance?",
+            SelectBox('goal_distance', ['5.0', '10.0', '21.1'], ''),
+            'km',
+            "\n What's your main goal?",
+            SelectBox('main_goal', ['Finish the distance', 'Finish in a target time'], ''),
+            "\n If your goal is to finish in a target time, what's your target finish time (in minutes)?\n",
+            italic('For example, enter 25.5 for 25 minutes and 30 seconds.'),
+            TextBox('goal_time', ' '),
+            "\n What's your longest continuous run so far?",
+            SelectBox('longest_run', ["I'm completely new to running", 'About 5km', 'More than 10km'], ''),
+            '\n In how many weeks do you want to reach your goal?',
+            SelectBox('number_of_weeks', ['4', '6', '8'], ''),
+            '\n How many days per week do you want to run?',
+            SelectBox('days_per_week', ['3', '4', '5', '6'], ''),
+            '\n',
+            Button('Enter', 'enter')
+        ]
+    )
+)
+
+#generate_program
+assert_equal(
+    generate_program(
+        State(
+            runner=Runner(
+                distance=5.0,
+                goal='Finish the distance',
+                time=0.0,
+                level=1,
+                weeks=4,
+                days=3
+            ),
+            training_sessions=[],
+            current_week=1,
+            message=''
+        )
+    ),
+    Page(
+        State(
+            runner=Runner(
+                distance=5.0,
+                goal='Finish the distance',
+                time=0.0,
+                level=1,
+                weeks=4,
+                days=3
+            ),
+            training_sessions=[
+                TrainingSession(1, 'Monday', 'Easy run: \n1.5km @ a comfortable pace', 1.5, False),
+                TrainingSession(1, 'Tuesday', 'Rest', 0.0, False),
+                TrainingSession(1, 'Wednesday', 'Workout: \n1km warm-up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool-down @ very comfortable effort', 3.3714285714285714, False),
+                TrainingSession(1, 'Thursday', 'Rest', 0.0, False),
+                TrainingSession(1, 'Friday', 'Rest', 0.0, False),
+                TrainingSession(1, 'Saturday', 'Long run: \n2.0km @ a comfortable pace', 2.0, False),
+                TrainingSession(1, 'Sunday', 'Rest', 0.0, False),
+
+                TrainingSession(2, 'Monday', 'Easy run: \n2.0km @ a comfortable pace', 2.0, False),
+                TrainingSession(2, 'Tuesday', 'Rest', 0.0, False),
+                TrainingSession(2, 'Wednesday', 'Workout: \n1km warm-up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool-down @ very comfortable effort', 4.428571428571429, False),
+                TrainingSession(2, 'Thursday', 'Rest', 0.0, False),
+                TrainingSession(2, 'Friday', 'Rest', 0.0, False),
+                TrainingSession(2, 'Saturday', 'Long run: \n2.8km @ a comfortable pace', 2.8, False),
+                TrainingSession(2, 'Sunday', 'Rest', 0.0, False),
+
+                TrainingSession(3, 'Monday', 'Easy run: \n2.5km @ a comfortable pace', 2.5, False),
+                TrainingSession(3, 'Tuesday', 'Rest', 0.0, False),
+                TrainingSession(3, 'Wednesday', 'Workout: \n1km warm-up @ comfortable effort\n5 x (3 min run + 1 min walk)\n1km cool-down @ very comfortable effort', 4.642857142857142, False),
+                TrainingSession(3, 'Thursday', 'Rest', 0.0, False),
+                TrainingSession(3, 'Friday', 'Rest', 0.0, False),
+                TrainingSession(3, 'Saturday', 'Long run: \n3.7km @ a comfortable pace', 3.7, False),
+                TrainingSession(3, 'Sunday', 'Rest', 0.0, False),
+
+                TrainingSession(4, 'Monday', 'Easy run: \n3.0km @ a comfortable pace', 3.0, False),
+                TrainingSession(4, 'Tuesday', 'Rest', 0.0, False),
+                TrainingSession(4, 'Wednesday', 'Workout: \n1km warm-up @ comfortable effort\n6 x (4 min run + 1 min walk)\n1km cool-down @ very comfortable effort', 6.0285714285714285, False),
+                TrainingSession(4, 'Thursday', 'Rest', 0.0, False),
+                TrainingSession(4, 'Friday', 'Rest', 0.0, False),
+                TrainingSession(4, 'Saturday', 'Long run: \n4.5km @ a comfortable pace', 4.5, False),
+                TrainingSession(4, 'Sunday', 'Rest', 0.0, False)
+            ],
+            current_week=1,
+            message=''
+        ),
+        [
+            Header('Your training schedule', style_color='black'),
+            bold('Week: '),
+            '1',
+            ' of ',
+            '4',
+            Table([
+                [
+                    change_color(bold('Monday'), 'black'),
+                    change_color(bold('Tuesday'), 'black'),
+                    change_color(bold('Wednesday'), 'black'),
+                    change_color(bold('Thursday'), 'black'),
+                    change_color(bold('Friday'), 'black'),
+                    change_color(bold('Saturday'), 'black'),
+                    change_color(bold('Sunday'), 'black')
+                ],
+                [
+                    'Easy run: \n1.5km @ a comfortable pace',
+                    'Rest',
+                    'Workout: \n1km warm-up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool-down @ very comfortable effort',
+                    'Rest',
+                    'Rest',
+                    'Long run: \n2.0km @ a comfortable pace',
+                    'Rest'
+                ],
+                [
+                    italic('Keep it easy! Use the given pace as a guideline, but go by feel.'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Time to push! Challenge yourself!'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Time to get some extra mileage in!'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.')
+                ],
+                [
+                    Button('Done!', 'complete', arguments={'week': 1, 'day': 'Monday'}, style_background_color='green'),
+                    ' ',
+                    Button('Done!', 'complete', arguments={'week': 1, 'day': 'Wednesday'}, style_background_color='green'),
+                    ' ',
+                    ' ',
+                    Button('Done!', 'complete', arguments={'week': 1, 'day': 'Saturday'}, style_background_color='green'),
+                    ' '
+                ],
+                ['❌', ' ', '❌', ' ', ' ', '❌', ' ']
+            ]),
+            Button('Next week', 'next_week'),
+            '\n',
+            '\n',
+            Button('Change my information', 'change'),
+            '\n',
+            Button('View my progress', 'progress')
+        ]
+    )
+)
+
+#complete
+assert_equal(
+    complete(
+        State(
+            runner=Runner(
+                distance=5.0,
+                goal='Finish the distance',
+                time=0.0,
+                level=1,
+                weeks=4,
+                days=3
+            ),
+            training_sessions=[
+                TrainingSession(week=1, day='Monday', workout_type='Easy run: \n1.5km @ a comfortable pace', distance=1.5, is_complete=False),
+                TrainingSession(week=1, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=3.3714285714285714, is_complete=False),
+                TrainingSession(week=1, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Saturday', workout_type='Long run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=1, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Monday', workout_type='Easy run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=2, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=4.428571428571429, is_complete=False),
+                TrainingSession(week=2, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Saturday', workout_type='Long run: \n2.8km @ a comfortable pace', distance=2.8, is_complete=False),
+                TrainingSession(week=2, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Monday', workout_type='Easy run: \n2.5km @ a comfortable pace', distance=2.5, is_complete=False),
+                TrainingSession(week=3, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (3 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=4.642857142857142, is_complete=False),
+                TrainingSession(week=3, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Saturday', workout_type='Long run: \n3.7km @ a comfortable pace', distance=3.7, is_complete=False),
+                TrainingSession(week=3, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Monday', workout_type='Easy run: \n3.0km @ a comfortable pace', distance=3.0, is_complete=False),
+                TrainingSession(week=4, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n6 x (4 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=6.0285714285714285, is_complete=False),
+                TrainingSession(week=4, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Saturday', workout_type='Long run: \n4.5km @ a comfortable pace', distance=4.5, is_complete=False),
+                TrainingSession(week=4, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False)
+            ],
+            current_week=1,
+            message=''
+        ),
+        1,
+        'Monday'
+    ),
+    Page(
+        State(
+            runner=Runner(
+                distance=5.0,
+                goal='Finish the distance',
+                time=0.0,
+                level=1,
+                weeks=4,
+                days=3
+            ),
+            training_sessions=[
+                TrainingSession(week=1, day='Monday', workout_type='Easy run: \n1.5km @ a comfortable pace', distance=1.5, is_complete=True),
+                TrainingSession(week=1, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=3.3714285714285714, is_complete=False),
+                TrainingSession(week=1, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Saturday', workout_type='Long run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=1, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Monday', workout_type='Easy run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=2, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=4.428571428571429, is_complete=False),
+                TrainingSession(week=2, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Saturday', workout_type='Long run: \n2.8km @ a comfortable pace', distance=2.8, is_complete=False),
+                TrainingSession(week=2, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Monday', workout_type='Easy run: \n2.5km @ a comfortable pace', distance=2.5, is_complete=False),
+                TrainingSession(week=3, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (3 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=4.642857142857142, is_complete=False),
+                TrainingSession(week=3, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Saturday', workout_type='Long run: \n3.7km @ a comfortable pace', distance=3.7, is_complete=False),
+                TrainingSession(week=3, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Monday', workout_type='Easy run: \n3.0km @ a comfortable pace', distance=3.0, is_complete=False),
+                TrainingSession(week=4, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n6 x (4 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=6.0285714285714285, is_complete=False),
+                TrainingSession(week=4, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Saturday', workout_type='Long run: \n4.5km @ a comfortable pace', distance=4.5, is_complete=False),
+                TrainingSession(week=4, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False)
+            ],
+            current_week=1,
+            message=''
+        ),
+        [
+            Header('Your training schedule', style_color='black'),
+            bold('Week: '),
+            '1',
+            ' of ',
+            '4',
+            Table([
+                [
+                    change_color(bold('Monday'), 'black'),
+                    change_color(bold('Tuesday'), 'black'),
+                    change_color(bold('Wednesday'), 'black'),
+                    change_color(bold('Thursday'), 'black'),
+                    change_color(bold('Friday'), 'black'),
+                    change_color(bold('Saturday'), 'black'),
+                    change_color(bold('Sunday'), 'black')
+                ],
+                [
+                    'Easy run: \n1.5km @ a comfortable pace',
+                    'Rest',
+                    'Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort',
+                    'Rest',
+                    'Rest',
+                    'Long run: \n2.0km @ a comfortable pace',
+                    'Rest'
+                ],
+                [
+                    italic('Keep it easy! Use the given pace as a guideline, but go by feel.'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Time to push! Challenge yourself!'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Time to get some extra mileage in!'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.')
+                ],
+                [
+                    Button('Undo', 'undo', arguments={'week': 1, 'day': 'Monday'}, style_background_color='darkgray'),
+                    ' ',
+                    Button('Done!', 'complete', arguments={'week': 1, 'day': 'Wednesday'}, style_background_color='green'),
+                    ' ',
+                    ' ',
+                    Button('Done!', 'complete', arguments={'week': 1, 'day': 'Saturday'}, style_background_color='green'),
+                    ' '
+                ],
+                ['✅', ' ', '❌', ' ', ' ', '❌', ' ']
+            ]),
+            Button('Next week', 'next_week'),
+            '\n',
+            '\n',
+            Button('Change my information', 'change'),
+            '\n',
+            Button('View my progress', 'progress')
+        ]
+    )
+)
+
+#undo
+assert_equal(
+    undo(
+        State(
+            runner=Runner(
+                distance=5.0,
+                goal='Finish the distance',
+                time=0.0,
+                level=1,
+                weeks=4,
+                days=3
+            ),
+            training_sessions=[
+                TrainingSession(week=1, day='Monday', workout_type='Easy run: \n1.5km @ a comfortable pace', distance=1.5, is_complete=True),
+                TrainingSession(week=1, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=3.3714285714285714, is_complete=False),
+                TrainingSession(week=1, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Saturday', workout_type='Long run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=1, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Monday', workout_type='Easy run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=2, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=4.428571428571429, is_complete=False),
+                TrainingSession(week=2, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Saturday', workout_type='Long run: \n2.8km @ a comfortable pace', distance=2.8, is_complete=False),
+                TrainingSession(week=2, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Monday', workout_type='Easy run: \n2.5km @ a comfortable pace', distance=2.5, is_complete=False),
+                TrainingSession(week=3, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (3 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=4.642857142857142, is_complete=False),
+                TrainingSession(week=3, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Saturday', workout_type='Long run: \n3.7km @ a comfortable pace', distance=3.7, is_complete=False),
+                TrainingSession(week=3, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Monday', workout_type='Easy run: \n3.0km @ a comfortable pace', distance=3.0, is_complete=False),
+                TrainingSession(week=4, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n6 x (4 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=6.0285714285714285, is_complete=False),
+                TrainingSession(week=4, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Saturday', workout_type='Long run: \n4.5km @ a comfortable pace', distance=4.5, is_complete=False),
+                TrainingSession(week=4, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False)
+            ],
+            current_week=1,
+            message=''
+        ),
+        1,
+        'Monday'
+    ),
+    Page(
+        State(
+            runner=Runner(
+                distance=5.0,
+                goal='Finish the distance',
+                time=0.0,
+                level=1,
+                weeks=4,
+                days=3
+            ),
+            training_sessions=[
+                TrainingSession(week=1, day='Monday', workout_type='Easy run: \n1.5km @ a comfortable pace', distance=1.5, is_complete=False),
+                TrainingSession(week=1, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=3.3714285714285714, is_complete=False),
+                TrainingSession(week=1, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Saturday', workout_type='Long run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=1, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Monday', workout_type='Easy run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=2, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=4.428571428571429, is_complete=False),
+                TrainingSession(week=2, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Saturday', workout_type='Long run: \n2.8km @ a comfortable pace', distance=2.8, is_complete=False),
+                TrainingSession(week=2, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Monday', workout_type='Easy run: \n2.5km @ a comfortable pace', distance=2.5, is_complete=False),
+                TrainingSession(week=3, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (3 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=4.642857142857142, is_complete=False),
+                TrainingSession(week=3, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Saturday', workout_type='Long run: \n3.7km @ a comfortable pace', distance=3.7, is_complete=False),
+                TrainingSession(week=3, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Monday', workout_type='Easy run: \n3.0km @ a comfortable pace', distance=3.0, is_complete=False),
+                TrainingSession(week=4, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n6 x (4 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=6.0285714285714285, is_complete=False),
+                TrainingSession(week=4, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Saturday', workout_type='Long run: \n4.5km @ a comfortable pace', distance=4.5, is_complete=False),
+                TrainingSession(week=4, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False)
+            ],
+            current_week=1,
+            message=''
+        ),
+        [
+            Header('Your training schedule', style_color='black'),
+            bold('Week: '),
+            '1',
+            ' of ',
+            '4',
+            Table([
+                [
+                    change_color(bold('Monday'), 'black'),
+                    change_color(bold('Tuesday'), 'black'),
+                    change_color(bold('Wednesday'), 'black'),
+                    change_color(bold('Thursday'), 'black'),
+                    change_color(bold('Friday'), 'black'),
+                    change_color(bold('Saturday'), 'black'),
+                    change_color(bold('Sunday'), 'black')
+                ],
+                [
+                    'Easy run: \n1.5km @ a comfortable pace',
+                    'Rest',
+                    'Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort',
+                    'Rest',
+                    'Rest',
+                    'Long run: \n2.0km @ a comfortable pace',
+                    'Rest'
+                ],
+                [
+                    italic('Keep it easy! Use the given pace as a guideline, but go by feel.'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Time to push! Challenge yourself!'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Time to get some extra mileage in!'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.')
+                ],
+                [
+                    Button('Done!', 'complete', arguments={'week': 1, 'day': 'Monday'}, style_background_color='green'),
+                    ' ',
+                    Button('Done!', 'complete', arguments={'week': 1, 'day': 'Wednesday'}, style_background_color='green'),
+                    ' ',
+                    ' ',
+                    Button('Done!', 'complete', arguments={'week': 1, 'day': 'Saturday'}, style_background_color='green'),
+                    ' '
+                ],
+                ['❌', ' ', '❌', ' ', ' ', '❌', ' ']
+            ]),
+            Button('Next week', 'next_week'),
+            '\n',
+            '\n',
+            Button('Change my information', 'change'),
+            '\n',
+            Button('View my progress', 'progress')
+        ]
+    )
+)
+
+#next_week
+assert_equal(
+    next_week(
+        State(
+            runner=Runner(
+                distance=5.0,
+                goal='Finish the distance',
+                time=0.0,
+                level=1,
+                weeks=4,
+                days=3
+            ),
+            training_sessions=[
+                TrainingSession(week=1, day='Monday', workout_type='Easy run: \n1.5km @ a comfortable pace', distance=1.5, is_complete=False),
+                TrainingSession(week=1, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=3.3714285714285714, is_complete=False),
+                TrainingSession(week=1, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Saturday', workout_type='Long run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=1, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Monday', workout_type='Easy run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=2, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=4.428571428571429, is_complete=False),
+                TrainingSession(week=2, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Saturday', workout_type='Long run: \n2.8km @ a comfortable pace', distance=2.8, is_complete=False),
+                TrainingSession(week=2, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Monday', workout_type='Easy run: \n2.5km @ a comfortable pace', distance=2.5, is_complete=False),
+                TrainingSession(week=3, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (3 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=4.642857142857142, is_complete=False),
+                TrainingSession(week=3, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Saturday', workout_type='Long run: \n3.7km @ a comfortable pace', distance=3.7, is_complete=False),
+                TrainingSession(week=3, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Monday', workout_type='Easy run: \n3.0km @ a comfortable pace', distance=3.0, is_complete=False),
+                TrainingSession(week=4, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n6 x (4 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=6.0285714285714285, is_complete=False),
+                TrainingSession(week=4, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Saturday', workout_type='Long run: \n4.5km @ a comfortable pace', distance=4.5, is_complete=False),
+                TrainingSession(week=4, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False)
+            ],
+            current_week=1,
+            message=''
+        )
+    ),
+    Page(
+        State(
+            runner=Runner(
+                distance=5.0,
+                goal='Finish the distance',
+                time=0.0,
+                level=1,
+                weeks=4,
+                days=3
+            ),
+            training_sessions=[
+                TrainingSession(week=1, day='Monday', workout_type='Easy run: \n1.5km @ a comfortable pace', distance=1.5, is_complete=False),
+                TrainingSession(week=1, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=3.3714285714285714, is_complete=False),
+                TrainingSession(week=1, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Saturday', workout_type='Long run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=1, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Monday', workout_type='Easy run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=2, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=4.428571428571429, is_complete=False),
+                TrainingSession(week=2, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Saturday', workout_type='Long run: \n2.8km @ a comfortable pace', distance=2.8, is_complete=False),
+                TrainingSession(week=2, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Monday', workout_type='Easy run: \n2.5km @ a comfortable pace', distance=2.5, is_complete=False),
+                TrainingSession(week=3, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (3 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=4.642857142857142, is_complete=False),
+                TrainingSession(week=3, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Saturday', workout_type='Long run: \n3.7km @ a comfortable pace', distance=3.7, is_complete=False),
+                TrainingSession(week=3, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Monday', workout_type='Easy run: \n3.0km @ a comfortable pace', distance=3.0, is_complete=False),
+                TrainingSession(week=4, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n6 x (4 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=6.0285714285714285, is_complete=False),
+                TrainingSession(week=4, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Saturday', workout_type='Long run: \n4.5km @ a comfortable pace', distance=4.5, is_complete=False),
+                TrainingSession(week=4, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False)
+            ],
+            current_week=2,
+            message=''
+        ),
+        [
+            Header('Your training schedule', style_color='black'),
+            bold('Week: '),
+            '2',
+            ' of ',
+            '4',
+            Table([
+                [
+                    change_color(bold('Monday'), 'black'),
+                    change_color(bold('Tuesday'), 'black'),
+                    change_color(bold('Wednesday'), 'black'),
+                    change_color(bold('Thursday'), 'black'),
+                    change_color(bold('Friday'), 'black'),
+                    change_color(bold('Saturday'), 'black'),
+                    change_color(bold('Sunday'), 'black')
+                ],
+                [
+                    'Easy run: \n2.0km @ a comfortable pace',
+                    'Rest',
+                    'Workout: \n1km warm_up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool_down @ very comfortable effort',
+                    'Rest',
+                    'Rest',
+                    'Long run: \n2.8km @ a comfortable pace',
+                    'Rest'
+                ],
+                [
+                    italic('Keep it easy! Use the given pace as a guideline, but go by feel.'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Time to push! Challenge yourself!'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Time to get some extra mileage in!'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.')
+                ],
+                [
+                    Button('Done!', 'complete', arguments={'week': 2, 'day': 'Monday'}, style_background_color='green'),
+                    ' ',
+                    Button('Done!', 'complete', arguments={'week': 2, 'day': 'Wednesday'}, style_background_color='green'),
+                    ' ',
+                    ' ',
+                    Button('Done!', 'complete', arguments={'week': 2, 'day': 'Saturday'}, style_background_color='green'),
+                    ' '
+                ],
+                ['❌', ' ', '❌', ' ', ' ', '❌', ' ']
+            ]),
+            Button('Previous week', 'previous_week'),
+            Button('Next week', 'next_week'),
+            '\n',
+            '\n',
+            Button('Change my information', 'change'),
+            '\n',
+            Button('View my progress', 'progress')
+        ]
+    )
+)
+
+#previous_week
+assert_equal(
+    previous_week(State(
+        runner=Runner(
+            distance=5.0,
+            goal='Finish the distance',
+            time=0.0,
+            level=1,
+            weeks=4,
+            days=3
+        ),
+        training_sessions=[
+            TrainingSession(week=1, day='Monday', workout_type='Easy run: \n1.5km @ a comfortable pace', distance=1.5, is_complete=False),
+            TrainingSession(week=1, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=1, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=3.3714285714285714, is_complete=False),
+            TrainingSession(week=1, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=1, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=1, day='Saturday', workout_type='Long run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+            TrainingSession(week=1, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=2, day='Monday', workout_type='Easy run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+            TrainingSession(week=2, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=2, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=4.428571428571429, is_complete=False),
+            TrainingSession(week=2, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=2, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=2, day='Saturday', workout_type='Long run: \n2.8km @ a comfortable pace', distance=2.8, is_complete=False),
+            TrainingSession(week=2, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=3, day='Monday', workout_type='Easy run: \n2.5km @ a comfortable pace', distance=2.5, is_complete=False),
+            TrainingSession(week=3, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=3, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (3 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=4.642857142857142, is_complete=False),
+            TrainingSession(week=3, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=3, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=3, day='Saturday', workout_type='Long run: \n3.7km @ a comfortable pace', distance=3.7, is_complete=False),
+            TrainingSession(week=3, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=4, day='Monday', workout_type='Easy run: \n3.0km @ a comfortable pace', distance=3.0, is_complete=False),
+            TrainingSession(week=4, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=4, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n6 x (4 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=6.0285714285714285, is_complete=False),
+            TrainingSession(week=4, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=4, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=4, day='Saturday', workout_type='Long run: \n4.5km @ a comfortable pace', distance=4.5, is_complete=False),
+            TrainingSession(week=4, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False)
+        ],
+        current_week=2,
+        message=''
+    )),
+    Page(
+        state=State(
+            runner=Runner(distance=5.0, goal='Finish the distance', time=0.0, level=1, weeks=4, days=3),
+            training_sessions=[
+                TrainingSession(week=1, day='Monday', workout_type='Easy run: \n1.5km @ a comfortable pace', distance=1.5, is_complete=False),
+                TrainingSession(week=1, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=3.3714285714285714, is_complete=False),
+                TrainingSession(week=1, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Saturday', workout_type='Long run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=1, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Monday', workout_type='Easy run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=2, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=4.428571428571429, is_complete=False),
+                TrainingSession(week=2, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Saturday', workout_type='Long run: \n2.8km @ a comfortable pace', distance=2.8, is_complete=False),
+                TrainingSession(week=2, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Monday', workout_type='Easy run: \n2.5km @ a comfortable pace', distance=2.5, is_complete=False),
+                TrainingSession(week=3, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (3 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=4.642857142857142, is_complete=False),
+                TrainingSession(week=3, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Saturday', workout_type='Long run: \n3.7km @ a comfortable pace', distance=3.7, is_complete=False),
+                TrainingSession(week=3, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Monday', workout_type='Easy run: \n3.0km @ a comfortable pace', distance=3.0, is_complete=False),
+                TrainingSession(week=4, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n6 x (4 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=6.0285714285714285, is_complete=False),
+                TrainingSession(week=4, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Saturday', workout_type='Long run: \n4.5km @ a comfortable pace', distance=4.5, is_complete=False),
+                TrainingSession(week=4, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False)
+            ],
+            current_week=1,
+            message=''
+        ),
+        content=[
+            Header('Your training schedule', style_color='black'),
+            bold('Week: '),
+            '1',
+            ' of ',
+            '4',
+            Table([
+                [
+                    change_color(bold('Monday'), 'black'),
+                    change_color(bold('Tuesday'), 'black'),
+                    change_color(bold('Wednesday'), 'black'),
+                    change_color(bold('Thursday'), 'black'),
+                    change_color(bold('Friday'), 'black'),
+                    change_color(bold('Saturday'), 'black'),
+                    change_color(bold('Sunday'), 'black')
+                ],
+                [
+                    'Easy run: \n1.5km @ a comfortable pace',
+                    'Rest',
+                    'Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort',
+                    'Rest',
+                    'Rest',
+                    'Long run: \n2.0km @ a comfortable pace',
+                    'Rest'
+                ],
+                [
+                    italic('Keep it easy! Use the given pace as a guideline, but go by feel.'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Time to push! Challenge yourself!'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.'),
+                    italic('Time to get some extra mileage in!'),
+                    italic('Prioritize recovery. Make sure to get enough fuel and sleep.')
+                ],
+                [
+                    Button('Done!', 'complete', arguments={'week': 1, 'day': 'Monday'}, style_background_color='green'),
+                    ' ',
+                    Button('Done!', 'complete', arguments={'week': 1, 'day': 'Wednesday'}, style_background_color='green'),
+                    ' ',
+                    ' ',
+                    Button('Done!', 'complete', arguments={'week': 1, 'day': 'Saturday'}, style_background_color='green'),
+                    ' '
+                ],
+                ['❌', ' ', '❌', ' ', ' ', '❌', ' ']
+            ]),
+            Button('Next week', 'next_week'),
+            '\n',
+            '\n',
+            Button('Change my information', 'change'),
+            '\n',
+            Button('View my progress', 'progress')
+        ]
+    )
+)
+
+#progress
+assert_equal(
+    progress(State(
+        runner=Runner(distance=5.0, goal='Finish the distance', time=0.0, level=1, weeks=4, days=3),
+        training_sessions=[
+            TrainingSession(week=1, day='Monday', workout_type='Easy run: \n1.5km @ a comfortable pace', distance=1.5, is_complete=False),
+            TrainingSession(week=1, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=1, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=3.3714285714285714, is_complete=False),
+            TrainingSession(week=1, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=1, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=1, day='Saturday', workout_type='Long run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+            TrainingSession(week=1, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=2, day='Monday', workout_type='Easy run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+            TrainingSession(week=2, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=2, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=4.428571428571429, is_complete=False),
+            TrainingSession(week=2, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=2, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=2, day='Saturday', workout_type='Long run: \n2.8km @ a comfortable pace', distance=2.8, is_complete=False),
+            TrainingSession(week=2, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=3, day='Monday', workout_type='Easy run: \n2.5km @ a comfortable pace', distance=2.5, is_complete=False),
+            TrainingSession(week=3, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=3, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (3 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=4.642857142857142, is_complete=False),
+            TrainingSession(week=3, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=3, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=3, day='Saturday', workout_type='Long run: \n3.7km @ a comfortable pace', distance=3.7, is_complete=False),
+            TrainingSession(week=3, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=4, day='Monday', workout_type='Easy run: \n3.0km @ a comfortable pace', distance=3.0, is_complete=False),
+            TrainingSession(week=4, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=4, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n6 x (4 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=6.0285714285714285, is_complete=False),
+            TrainingSession(week=4, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=4, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+            TrainingSession(week=4, day='Saturday', workout_type='Long run: \n4.5km @ a comfortable pace', distance=4.5, is_complete=False),
+            TrainingSession(week=4, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False)
+        ],
+        current_week=1,
+        message=''
+    )),
+    Page(
+        state=State(
+            runner=Runner(distance=5.0, goal='Finish the distance', time=0.0, level=1, weeks=4, days=3),
+            training_sessions=[
+                TrainingSession(week=1, day='Monday', workout_type='Easy run: \n1.5km @ a comfortable pace', distance=1.5, is_complete=False),
+                TrainingSession(week=1, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n4 x (1 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=3.3714285714285714, is_complete=False),
+                TrainingSession(week=1, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=1, day='Saturday', workout_type='Long run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=1, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Monday', workout_type='Easy run: \n2.0km @ a comfortable pace', distance=2.0, is_complete=False),
+                TrainingSession(week=2, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (2 min run + 2 min walk)\n1km cool_down @ very comfortable effort', distance=4.428571428571429, is_complete=False),
+                TrainingSession(week=2, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=2, day='Saturday', workout_type='Long run: \n2.8km @ a comfortable pace', distance=2.8, is_complete=False),
+                TrainingSession(week=2, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Monday', workout_type='Easy run: \n2.5km @ a comfortable pace', distance=2.5, is_complete=False),
+                TrainingSession(week=3, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n5 x (3 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=4.642857142857142, is_complete=False),
+                TrainingSession(week=3, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=3, day='Saturday', workout_type='Long run: \n3.7km @ a comfortable pace', distance=3.7, is_complete=False),
+                TrainingSession(week=3, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Monday', workout_type='Easy run: \n3.0km @ a comfortable pace', distance=3.0, is_complete=False),
+                TrainingSession(week=4, day='Tuesday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Wednesday', workout_type='Workout: \n1km warm_up @ comfortable effort\n6 x (4 min run + 1 min walk)\n1km cool_down @ very comfortable effort', distance=6.0285714285714285, is_complete=False),
+                TrainingSession(week=4, day='Thursday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Friday', workout_type='Rest', distance=0.0, is_complete=False),
+                TrainingSession(week=4, day='Saturday', workout_type='Long run: \n4.5km @ a comfortable pace', distance=4.5, is_complete=False),
+                TrainingSession(week=4, day='Sunday', workout_type='Rest', distance=0.0, is_complete=False)
+            ],
+            current_week=1,
+            message="It's your first week! You're doing great!"
+        ),
+        content=[
+            Header('Your progress', style_color='black'),
+            "It's your first week! You're doing great!",
+            '\n',
+            Div(
+                bold('You have completed: '),
+                '0',
+                '/',
+                '12',
+                'sessions',
+                '\n',
+                bold('Total distance: '),
+                '0.0',
+                'km',
+                style_border='2px solid steelblue',
+                style_padding='12px',
+                style_width='500px'
+            ),
+            '\n',
+            Button('Back to schedule', 'generate_program')
+        ]
+    )
+)
+
 start_server(State(Runner(0.0, "", 0.0, 0, 0, 0), [], 1, ""))
 
