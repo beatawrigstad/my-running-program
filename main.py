@@ -138,8 +138,8 @@ def enter(state: State, goal_distance: str, main_goal: str,
                 return start(state)
             
     if state.runner.level == 2 and state.runner.distance == 21.1:
-        if state.runner.weeks * state.runner.days < 16:
-            state.message = "Please enter a more realistic goal."
+            if state.runner.weeks * state.runner.days < 16:
+                state.message = "Please enter a more realistic goal."
                 return start(state)
             
     state.current_week = 1
@@ -149,13 +149,12 @@ def enter(state: State, goal_distance: str, main_goal: str,
     if state.runner.time > 0:
         time_message = "Your target time is " + str(state.runner.time) + " minutes."
     else:
-        time_message = "Your goal is to finish the distance."
+         time_message = "Your goal is to finish the distance."
 
     return Page(
         state,
         [change_color(Header("Great!"), "black"),
-         "You selected a " + str(state.runner.weeks) + "-week program for " + 
-         str(state.runner.distance) + " km.",
+         "You selected a " + str(state.runner.weeks) + "-week program for " + str(state.runner.distance) + " km.",
          time_message, "\n",
          "\n",
          Button("Yes! Let's go!", "generate_program"),
@@ -173,15 +172,13 @@ def format_pace(pace: float) -> str:
     seconds = round(pace*60)
     pace_min = seconds // 60
     pace_sec = seconds % 60
-    #.zfill(2) adds 0 until the string contains two characters
-    return str(pace_min) + ":" + str(pace_sec).zfill(2) + " min/km" 
+    return str(pace_min) + ":" + str(pace_sec).zfill(2) + " min/km" #.zfill(2) adds 0 until the string contains two characters
 
-def easy_run(state: State) -> tuple[str, float]:  
+def easy_run(state: State) -> tuple[str, float]: #tuple[] shows that the function returns two values as a tuple 
     """
     Calculates the length and pace of the user's easy runs
     Returns a tuple of a description of the session and the total distance
     """
-    #tuple[] shows that the function returns two values as a tuple
     
     if state.runner.time == 0:
         pace = "a comfortable pace"
@@ -221,8 +218,7 @@ def easy_run(state: State) -> tuple[str, float]:
             start_len = 8.0
             end_len = 14.0
     
-    # Calculate how far the user is through the training program, 
-    # which is used to gradually increase the running distance.
+    # Calculate how far the user is through the training program, which is used to gradually increase the running distance.
     progress_fraction = (state.current_week - 1) / (state.runner.weeks - 1)
     distance = start_len + (end_len - start_len) * progress_fraction
     distance = round(distance, 1) #round to one decimal 
@@ -287,8 +283,7 @@ def workout(state: State, workout_number: int) -> tuple[str, float]:
             run_pace = 7.0
         
         walk_pace = 10.0
-        distance = warmup + (repetitions * run_min) / run_pace + 
-        (repetitions * walk_min) / walk_pace + cooldown
+        distance = warmup + (repetitions * run_min) / run_pace + (repetitions * walk_min) / walk_pace + cooldown
 
         description = (str(repetitions) + " x (" + str(run_min) + " min run + " +
             str(walk_min) + " min walk)")
@@ -310,8 +305,7 @@ def workout(state: State, workout_number: int) -> tuple[str, float]:
             harder_pace = "controlled hard effort"
             easier_pace = "comfortable effort"
         
-        distance = warmup + repetitions * 
-        (hard_min / harder_pace_value + easy_min / easier_pace_value) + cooldown
+        distance = warmup + repetitions * (hard_min / harder_pace_value + easy_min / easier_pace_value) + cooldown
 
         description = (str(repetitions) + " x (" + str(hard_min) + " min hard @ " + harder_pace +
             " + " + str(easy_min) + " min easy @ " + easier_pace + ")")
@@ -502,7 +496,7 @@ def generate_program(state: State) -> Page:
             reason = "Time to push! Challenge yourself!" 
         explanations.append(reason)
         
-    buttons: list[Component | str] = [] #allows both buttons and str 
+    buttons: list[Component | str] = [] #allows both buttons for sessions and str (blanc space) for rest days
     for session in current_sessions:
         if "Rest" in session.workout_type:
             buttons.append(" ")
@@ -554,8 +548,8 @@ def generate_program(state: State) -> Page:
         content.append(Button("Next week", "next_week"))      
     else:
         content.append("\n")
-        content.append("Good job! You've reached the final week of your program! 
-        After this week, you are ready to run a" + " " + str(state.runner.distance) + "km" + pace)
+        content.append("Good job! You've reached the final week of your program! After this week, you are ready to run a" +
+                       " " + str(state.runner.distance) + "km" + pace)
     content.append("\n")
     content.append("\n")
     content.append(Button("Change my information", "change"))
@@ -600,7 +594,7 @@ def next_week(state: State) -> Page:
 
 @route
 def progress(state: State) -> Page:
-    """ Shows the user's total distance and number of sessions completed, and a message"""
+    """ Shows the user's total distance and number of sessions completed, and a motivating message"""
     
     total_sessions = 0
     for session in state.training_sessions:
@@ -623,14 +617,13 @@ def progress(state: State) -> Page:
         state.message = "Awesome job! Almost there!"
     elif state.current_week == state.runner.weeks // 2:
         state.message = "Halfway there, let's keep going!"
-    elif len(state.training_sessions) > 0 and (completed_sessions/len(state.training_sessions)) > 0.5:
+    elif len(state.training_sessions) > 0 and (completed_sessions / len(state.training_sessions)) > 0.5:
         state.message = "You're making progress! Let's keep going"
     else:
         state.message = "You're doing awesome! Let's keep it up!" 
     
     statistics = Div(
-        bold("You have completed: "), str(completed_sessions), "/", 
-        str(int(total_sessions)), "sessions",
+        bold("You have completed: "), str(completed_sessions), "/", str(int(total_sessions)), "sessions",
         "\n", bold("Total distance: "), str(total_distance), "km",
         style_border="1px solid black",
         style_padding="10px",
@@ -647,3 +640,4 @@ def progress(state: State) -> Page:
     return Page(state, content)
     
 start_server(State(Runner(0.0, "", 0.0, 0, 0, 0), [], 1, ""))
+
