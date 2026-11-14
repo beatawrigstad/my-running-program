@@ -659,7 +659,7 @@ def generate_program(state: State) -> Page:
             reason = "Time to push! Challenge yourself!" 
         explanations.append(reason)
         
-    buttons = [] 
+    buttons: list[Component | int | float | str | Sequence[Component | str | int | float | bool]] = []
     for session in current_sessions:
         if "Rest" in session.workout_type:
             buttons.append(" ")
