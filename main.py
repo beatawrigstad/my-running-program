@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from drafter import *
-from bakery import assert_equal
+from typing import Sequence
 
 hide_debug_information()
 set_website_title("My Running Program")
