@@ -686,7 +686,7 @@ def generate_program(state: State) -> Page:
     
     day_headers = []
     for day in WEEK_DAYS:
-        day_headers.append((change_color(bold(day), "black"))
+        day_headers.append(change_color(bold(day), "black"))
 
     explanation_cells = []
     for reason in explanations:
