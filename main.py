@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from drafter import *
-from typing import Sequence
+from typing import cast
 
 hide_debug_information()
 set_website_title("My Running Program")
@@ -659,18 +659,18 @@ def generate_program(state: State) -> Page:
             reason = "Time to push! Challenge yourself!" 
         explanations.append(reason)
         
-    buttons: list[Component | int | float | str | Sequence[Component | str | int | float | bool]] = []
+    buttons: list[Component | str] = []
     for session in current_sessions:
         if "Rest" in session.workout_type:
             buttons.append(" ")
         elif not session.is_complete:
-            buttons.append(change_background_color(Button(
+            buttons.append(cast, (change_background_color(Button(
                 "Done!", "complete",
-                {"week": session.week, "day": session.day}), "green"))
+                {"week": session.week, "day": session.day}), "green")))
         else:
-            buttons.append(change_background_color(Button(
+            buttons.append(cast, (change_background_color(Button(
                 "Undo", "undo",
-                {"week": session.week, "day": session.day}), "darkgray"))
+                {"week": session.week, "day": session.day}), "darkgray")))
             
     completed_sessions = []
     for session in current_sessions:
@@ -684,10 +684,10 @@ def generate_program(state: State) -> Page:
     pace = "!"
     if state.runner.goal == "Finish in a target time":
         pace = " " + "in" + " " + str(state.runner.time) + "min"
-
-    day_headers = []
+    
+    day_headers: list[Component | str | int | float | bool] = []
     for day in WEEK_DAYS:
-        day_headers.append(change_color(bold(day), "black"))
+        day_headers.append(cast, (change_color(bold(day), "black")))
 
     explanation_cells = []
     for reason in explanations:
