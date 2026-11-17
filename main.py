@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from drafter import *
+from typing import Sequence 
 
 hide_debug_information()
 set_website_title("My Running Program")
@@ -671,7 +672,8 @@ def generate_program(state: State) -> Page:
             reason = "Time to push! Challenge yourself!" 
         explanations.append(reason)
         
-    buttons: list[Component | str] = [] 
+    buttons: list[
+    Component | str | int | float | Sequence[Component | str | int | float | bool]] = []
     for session in current_sessions:
         if "Rest" in session.workout_type:
             buttons.append(" ")
